@@ -1,0 +1,15 @@
+{
+  "author": "Andras Sevcsik",
+  "name": "couchdb-model",
+  "description": "",
+  "version": "0.0.1",
+  "repository": {
+    "url": "http://github.com/sevcsik/node-couchdb-model"
+  },
+  "main": "./lib/node-couchdb-model.js",
+  "dependencies": {
+    "node.extend": "~1.0.10",
+    "nano": "~5.7.1"
+  },
+  "devDependencies": {}
+}
