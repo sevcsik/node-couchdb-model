@@ -9,7 +9,16 @@
   "main": "./lib/node-couchdb-model.js",
   "dependencies": {
     "node.extend": "~1.0.10",
-    "nano": "~5.7.1"
+    "nano": "~5.7.1",
+    "node-uuid": "~1.4.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "chai": "~1.9.0",
+    "mocha": "~1.17.1",
+    "istanbul": "~0.2.4"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha -R spec --recursive tests",
+    "coverage": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --ui bdd -R spec --recursive tests"
+  }
 }
