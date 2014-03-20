@@ -24,6 +24,8 @@ var couchDBModel = require('couchdb-model');
 var myModel = couchDBModel(dbHandle);
 ```
 
+### Creating documents
+
 Now, you can use `myModel` to create a new document.
 
 ``` js
