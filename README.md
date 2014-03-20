@@ -1,6 +1,6 @@
 # couchdb-model
 
-A simple CouchDB abstraction for NodeJS build on [nano](https://github.com/dscape/nano).
+A simple CouchDB abstraction for NodeJS built on [nano](https://github.com/dscape/nano).
 
 ## Installation
 `npm install couchdb-model`
