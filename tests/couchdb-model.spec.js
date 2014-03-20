@@ -33,12 +33,12 @@ describe('couchdb-model', function() {
 
 	describe('simple model with ID indexing', function() {
 
-		it('should create a model with ID, and save it correctly', 
+		it('should create a model with ID', 
 			function(done) {
 			var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
 
 			var instance = Model.create({
-				id: 'test-id',
+				_id: 'test-id',
 				value: 'hello'
 			});
 
@@ -46,7 +46,7 @@ describe('couchdb-model', function() {
 				if (error) throw error;
 				Model.findOneByID('test-id', function(error, result) {
 					if (error) throw error;
-					instance.should.deep.equal(result);
+					instance.toVO().should.deep.equal(result.toVO());
 					done();
 				});
 			});
@@ -61,9 +61,9 @@ describe('couchdb-model', function() {
 
 			instance.save(function(error) {
 				if (error) throw error;
-				Model.findOneByID(instance.id, function(error, result) {
+				Model.findOneByID(instance._id, function(error, result) {
 					if (error) throw error;
-					instance.should.deep.equal(result);
+					instance.toVO().should.deep.equal(result.toVO());
 					done();
 				});
 			});
@@ -78,17 +78,17 @@ describe('couchdb-model', function() {
 
 			instance.save(function(error) {
 				if (error) throw error;
-				Model.findOneByID(instance.id, function(error, result) {
+				Model.findOneByID(instance._id, function(error, result) {
 					if (error) throw error;
-					instance.should.deep.equal(result);
+					instance.toVO().should.deep.equal(result.toVO());
 
 					instance.value = 'goodbye';
 					instance.save(function(error) {
 						if (error) throw error;
-						Model.findOneByID(instance.id, 
+						Model.findOneByID(instance._id, 
 						function(error, result) {
 							if (error) throw error;
-							result.should.deep.equal(instance);
+							result.toVO().should.deep.equal(instance.toVO());
 							done();
 						});
 					});
@@ -103,14 +103,13 @@ describe('couchdb-model', function() {
 				value: 'hello'
 			});
 
-			var id = instance.id;
-
 			instance.save(function(error) {
 				if (error) throw error;
+				var id = instance._id;
 				instance.delete(function(error) {
 					if (error) throw error;
-					Model.findById(id, function(error, data) {
-						error.should.be.an(object);
+					Model.findOneByID(id, function(error, data) {
+						error.should.be.an('object');
 						should.not.exist(data);		
 						done();
 					});
