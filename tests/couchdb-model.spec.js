@@ -5,6 +5,7 @@
 var should = require('chai').should();
 var couchDBModel = require('../lib/couchdb-model.js'); 
 var createNano = require('nano');
+var extend = require('node.extend');
 
 var COUCHDB_BASE_URL = process.env.COUCHDB_BASE_URL;
 if (!COUCHDB_BASE_URL) {
@@ -115,6 +116,40 @@ describe('couchdb-model', function() {
 					});
 				});
 			});
+		});
+
+		it('should allow to override the constructor', function(done) {
+			var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
+
+			Model.instanceConstructor = function (model, data) {
+				couchDBModel.Instance.call(this, model, data);
+				// Instance constructor already applied all field in 'data' to 'this'.
+				this.passwordWithAnX = 'X' + this.password;	// bulletproof encryption
+				this.password = undefined;
+			};
+
+			extend(Model.instanceConstructor.prototype, couchDBModel.Instance.prototype, {
+				checkPassword: function(password) {
+					return this.passwordWithAnX === 'X' + password;
+				}
+			});
+
+			var user = Model.create({ username: 'username', password: 'pw'});
+
+			user.should.be.instanceof(Model.instanceConstructor);
+			should.not.exist(user.password);
+
+			user.save(function(error) {
+				Model.findOneByID(user._id, function(error, result) {
+					result.should.be.instanceof(Model.instanceConstructor);
+					should.not.exist(user.password);
+					user.passwordWithAnX.should.be.ok;
+					user.checkPassword('pw').should.be.ok;
+					user.checkPassword('Xpw').should.be.not.ok;
+					done();
+				});
+			});	
+
 		});
 	});
 
