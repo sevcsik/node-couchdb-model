@@ -87,7 +87,7 @@ See nano documentation for more information.
 You can override the constructor wich is used by `Model#create` and `Model#find` methods.
 In order to keep it working, you have to extend the original constructor.
 
-```
+``` js
 var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
 
 Model.instanceConstructor = function (model, data) {
