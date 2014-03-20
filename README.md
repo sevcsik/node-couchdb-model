@@ -70,12 +70,12 @@ myModel.findOneByID('my_unique_id', function(error, result) {
 });
 ```
 
-## Error handling
+### Error handling
 
 If a request fails, nano's `error` parameter is just forwared to your callback.
 See nano documentation for more information.
 
-## Using your own constructor for models
+### Using your own constructor for models
 
 You can override the constructor wich is used by `Model#create` and `Model#find` methods.
 In order to keep it working, you have to extend the original constructor.
@@ -107,7 +107,7 @@ user.save(function(error) {
 ```
 All methods will be discarded when they are persisted to the database.
 
-# Unit tests
+## Unit tests
 
 To run unit tests, you have to set the $COUCHDB_BASE_URL environment variable
 to a working couchdb instance with administrative privileges.
@@ -119,7 +119,7 @@ during the tests. You can override the database name with $COUCHDB_DB_NAME.
 $ COUCHDB_BASE_URL="http://admin:admin@example.com:5984/" npm test
 ```
 
-# TODO
+## TODO
 
 * Allow to initialize a model directly with a URL instead of a database handle
 * Support for design documents, and queries with many results, like:
