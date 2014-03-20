@@ -40,6 +40,8 @@ var documentWithID = myModel.create({
 
 ```
 
+### Persisting changes to database
+
 You can persist the documents into the database. If no ID given, the instance
 will be updated with the ID couchdb generated.
 All functions and fields starting with `_` will be discarded, except 
@@ -51,6 +53,7 @@ document.save(function(error) {
 	else console.log('document saved with id: ' + document._id);
 });
 ```
+### Deleting documents
 
 To delete an document (ID will be reset to null)
 
@@ -60,6 +63,8 @@ document.delete(function(error) {
 	else console.log('document deleted.');
 });
 ```
+
+### Finding documents
 
 To find a document by ID:
 
