@@ -10,7 +10,8 @@
   "dependencies": {
     "node.extend": "~1.0.10",
     "nano": "~5.7.1",
-    "node-uuid": "~1.4.1"
+    "node-uuid": "~1.4.1",
+    "underscore.string": "~2.3.3"
   },
   "devDependencies": {
     "chai": "~1.9.0",
