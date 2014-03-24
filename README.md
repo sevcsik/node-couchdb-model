@@ -126,4 +126,5 @@ $ COUCHDB_BASE_URL="http://admin:admin@example.com:5984/" npm test
 	`myModel.findOneByUsername('username')` and 
 	`myModel.findManyByCreatedAt('2012-01-01', '2012-01-31', 'asc')`
 * Allow custom validation functions
+* Support for promises
 
