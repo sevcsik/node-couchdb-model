@@ -24,6 +24,8 @@ var couchDBModel = require('couchdb-model');
 var myModel = couchDBModel(dbHandle);
 ```
 
+### Creating documents
+
 Now, you can use `myModel` to create a new document.
 
 ``` js
@@ -40,6 +42,8 @@ var documentWithID = myModel.create({
 
 ```
 
+### Persisting changes to database
+
 You can persist the documents into the database. If no ID given, the instance
 will be updated with the ID couchdb generated.
 All functions and fields starting with `_` will be discarded, except 
@@ -51,6 +55,7 @@ document.save(function(error) {
 	else console.log('document saved with id: ' + document._id);
 });
 ```
+### Deleting documents
 
 To delete an document (ID will be reset to null)
 
@@ -61,6 +66,8 @@ document.delete(function(error) {
 });
 ```
 
+### Finding documents
+
 To find a document by ID:
 
 ``` js
@@ -70,17 +77,17 @@ myModel.findOneByID('my_unique_id', function(error, result) {
 });
 ```
 
-## Error handling
+### Error handling
 
 If a request fails, nano's `error` parameter is just forwared to your callback.
 See nano documentation for more information.
 
-## Using your own constructor for models
+### Using your own constructor for models
 
 You can override the constructor wich is used by `Model#create` and `Model#find` methods.
 In order to keep it working, you have to extend the original constructor.
 
-```
+``` js
 var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
 
 Model.instanceConstructor = function (model, data) {
@@ -107,7 +114,7 @@ user.save(function(error) {
 ```
 All methods will be discarded when they are persisted to the database.
 
-# Unit tests
+## Unit tests
 
 To run unit tests, you have to set the $COUCHDB_BASE_URL environment variable
 to a working couchdb instance with administrative privileges.
@@ -119,7 +126,7 @@ during the tests. You can override the database name with $COUCHDB_DB_NAME.
 $ COUCHDB_BASE_URL="http://admin:admin@example.com:5984/" npm test
 ```
 
-# TODO
+## TODO
 
 * Allow to initialize a model directly with a URL instead of a database handle
 * Support for design documents, and queries with many results, like:
