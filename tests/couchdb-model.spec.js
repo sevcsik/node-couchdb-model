@@ -186,7 +186,7 @@ describe('couchdb-model', function() {
 				}
 			};
 
-			model = new couchDBModel(db, {
+			model = couchDBModel(db, {
 				views: [
 					'_design/article/_view/by_date',
 					{
