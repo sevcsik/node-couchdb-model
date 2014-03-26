@@ -33,7 +33,7 @@ describe('couchdb-model', function() {
 		var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
 	});
 
-	describe.skip('simple model with ID indexing', function() {
+	describe('simple model with ID indexing', function() {
 
 		it('should create a model with ID', 
 			function(done) {
