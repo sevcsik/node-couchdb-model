@@ -314,17 +314,17 @@ describe('couchdb-model', function() {
 				oneByDateASC.toVO().should.deep.equal(articles[2].toVO(), 
 					'find one, asc');
 				manyByDateASC.should.have.length(2, 'find many, asc');
-				manyByDateASC[0].should.deep.equal(articles[2].toVO(),
+				manyByDateASC[0].toVO().should.deep.equal(articles[2].toVO(),
 					'find many, asc');
-				manyByDateASC[1].should.deep.equal(articles[3].toVO(),
+				manyByDateASC[1].toVO().should.deep.equal(articles[3].toVO(),
 					'find many, asc');
 				
 				oneByDateDSC.toVO().should.deep.equal(articles[3].toVO(), 
 					'find one, dsc');
 				manyByDateDSC.should.have.length(2, 'find many, dsc');
-				manyByDateDSC[0].should.deep.equal(articles[3].toVO(),
+				manyByDateDSC[0].toVO().should.deep.equal(articles[3].toVO(),
 					'find many, dsc');
-				manyByDateDSC[1].should.deep.equal(articles[2].toVO(),
+				manyByDateDSC[1].toVO().should.deep.equal(articles[2].toVO(),
 					'find many, dsc');
 
 				done();
