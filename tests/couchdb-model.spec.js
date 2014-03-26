@@ -269,17 +269,17 @@ describe('couchdb-model', function() {
 				Q.ninvoke(model, 'findOneBySlug', 'test_article_one_slug'),
 				Q.ninvoke(model, 'findManyBySlug', 'test_article_one_slug'),
 			]).spread(function(oneBySlug, manyBySlug) {
-				//oneBySlug.should.be.an.instance.of(couchDBModel.Instance);
+				oneBySlug.should.be.an.instanceof(couchDBModel.Instance);
 				oneBySlug.toVO().should.deep.equal(
 					articles[1].toVO(), 'find one');
-				//manyBySlug.should.be.an.instance.of(Array, 'find many');
+				manyBySlug.should.be.an.instanceof(Array, 'find many');
 				manyBySlug.should.have.length(1, 'find many');
-				//manyBySlug[0].should.be.an.instance.of(couchDBModel.Instance,
-				//	'find many');
-				//manyBySlug[0].toVO().should.deep.equal(oneByID.toVO(), 
-				//	'find many');
+				manyBySlug[0].should.be.an.instanceof(couchDBModel.Instance,
+					'find many');
+				manyBySlug[0].toVO().should.deep.equal(articles[1].toVO(), 
+					'find many');
 				done();
-			}, function(error) { done(error); });
+			}).fail(function(error) { done(error); });
 		});
 
 		it('should return every instance with tag \'even\'', function(done) {
@@ -290,7 +290,7 @@ describe('couchdb-model', function() {
 				manyByTags[0].toVO().should.deep.equal(articles[2].toVO());
 				manyByTags[1].toVO().should.deep.equal(articles[4].toVO());
 				done();
-			}, function(error) { done(error); });
+			}).fail(function(error) { done(error); });
 		});
 
 		it('should return every article from 2014 using a key range, ' + 
@@ -328,7 +328,7 @@ describe('couchdb-model', function() {
 					'find many, dsc');
 
 				done();
-			}, function(error) { done(error); });
+			}).fail(function(error) { done(error); });
 		});
 
 		// clean up after beforeEach
