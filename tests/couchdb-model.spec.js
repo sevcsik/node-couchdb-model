@@ -6,6 +6,7 @@ var should = require('chai').should();
 var couchDBModel = require('../lib/couchdb-model.js'); 
 var createNano = require('nano');
 var extend = require('node.extend');
+var Q = require('q');
 
 var COUCHDB_BASE_URL = process.env.COUCHDB_BASE_URL;
 if (!COUCHDB_BASE_URL) {
@@ -150,6 +151,204 @@ describe('couchdb-model', function() {
 				});
 			});	
 
+		});
+	});
+
+	describe('model with views', function() {
+		var db = nano.use(COUCHDB_DB_NAME);
+		var model, dd, articles;
+		// create test design document in the database
+		beforeEach(function(done) {
+			this.timeout(10000);
+
+			dd = {
+				_id: '_design/article',
+				views: {
+					by_date: {
+						map: function(doc) {
+							emit(doc.date, doc);
+						}
+					},
+					by_tag: {
+						map: function(doc) {
+							if (Array.isArray(doc.tags)) {
+								doc.tags.forEach(function(e) {
+									emit(e, doc);
+								});
+							}
+						}
+					},
+					by_slug: {
+						map: function(doc) {
+							emit(doc.slug, doc);
+						}
+					}
+				}
+			};
+
+			model = couchDBModel(db, {
+				views: [
+					'_design/article/_view/by_date',
+					{
+						path: '_design/article/_view/by_tag',
+						name: 'by_one_of_the_tags'
+					},
+					{
+						path: '_design/article/_view/by_slug'
+					}
+				]
+			});
+
+			// test data
+			articles = [
+				model.create({
+					_id: '0',
+					date: "1970-01-01T00:00:00",
+					slug: "test_article_that_is_super_old",
+					tags: []
+				}),
+				model.create({
+					_id: '1',
+					date: "2013-03-24T05:22:31",
+					slug: 'test_article_one_slug',
+					tags: ['one', 'odd', 'test']
+				}),
+				model.create({
+					_id: '2',
+					date: "2014-03-24T05:00:00",
+					slug: 'test_article_two_slug',
+					tags: ['two', 'even', 'test']
+				}),
+				model.create({
+					_id: '3',
+					date: "2014-03-24T05:22:31",
+					slug: 'test_article_three_slug',
+					tags: ['three', 'odd', 'test']
+				}),
+				model.create({
+					_id: '4',
+					date: "2013-03-24T05:00:00",
+					slug: 'test_article_four_slug',
+					tags: ['four', 'even', 'test']
+				}),
+			];
+
+			// build a promise array which saves the design docs and all
+			// our articles
+			//
+			// Both nano and chouchdb-model implement the node callback 
+			// pattern so we can use Q.ninvoke on them.
+			var promises = [
+				Q.ninvoke(db, 'insert', dd, dd._id)
+			];
+
+			articles.forEach(function(e) {
+				promises.push(Q.ninvoke(e, 'save'));
+			});
+
+			// wait for every promise to be fulfilled before continuing
+			Q.all(promises).then(
+				function() { done(); }, 
+				function(error) { done(error); }
+			);
+		});
+
+		it('should have the right methods when initialized with views', 
+			function() {
+
+			model.findOneByDate.should.be.a('function', 'one by date');
+			model.findManyByDate.should.be.a('function', 'many by date');
+			model.findOneByOneOfTheTags.should.be.a('function', 'one by tag');
+			model.findManyByOneOfTheTags.should.be.a('function', 'many by tag');
+			model.findOneBySlug.should.be.a('function', 'one by slug');
+			model.findManyBySlug.should.be.a('function', 'many by slug');
+		});
+
+		it('should return the correct instance by slug', function(done) {
+			Q.all([
+				Q.ninvoke(model, 'findOneBySlug', 'test_article_one_slug'),
+				Q.ninvoke(model, 'findManyBySlug', 'test_article_one_slug'),
+			]).spread(function(oneBySlug, manyBySlug) {
+				oneBySlug.should.be.an.instanceof(couchDBModel.Instance);
+				oneBySlug.toVO().should.deep.equal(
+					articles[1].toVO(), 'find one');
+				manyBySlug.should.be.an.instanceof(Array, 'find many');
+				manyBySlug.should.have.length(1, 'find many');
+				manyBySlug[0].should.be.an.instanceof(couchDBModel.Instance,
+					'find many');
+				manyBySlug[0].toVO().should.deep.equal(articles[1].toVO(), 
+					'find many');
+				done();
+			}).fail(function(error) { done(error); });
+		});
+
+		it('should return every instance with tag \'even\'', function(done) {
+			Q.all([
+				Q.ninvoke(model, 'findManyByOneOfTheTags', 'even')
+			]).spread(function(manyByTags) {
+				manyByTags.should.have.length(2);
+				manyByTags[0].toVO().should.deep.equal(articles[2].toVO());
+				manyByTags[1].toVO().should.deep.equal(articles[4].toVO());
+				done();
+			}).fail(function(error) { done(error); });
+		});
+
+		it('should return every article from 2014 using a key range, ' + 
+			'with the correct ordering', 
+			function(done) {
+			Q.all([
+				Q.ninvoke(model, 'findManyByDate', 
+					"2014-01-01T00:00:00", "2014-12-31T23:59:59", "asc"
+				),
+				Q.ninvoke(model, 'findOneByDate', 
+					"2014-01-01T00:00:00", "2014-12-31T23:59:59", "asc"
+				),
+				Q.ninvoke(model, 'findManyByDate', 
+					"2014-01-01T00:00:00", "2014-12-31T23:59:59", "dsc"
+				),
+				Q.ninvoke(model, 'findOneByDate', 
+					"2014-01-01T00:00:00", "2014-12-31T23:59:59", "dsc"
+				)
+			]).spread(function(manyByDateASC, oneByDateASC,
+					manyByDateDSC, oneByDateDSC) {
+				oneByDateASC.toVO().should.deep.equal(articles[2].toVO(), 
+					'find one, asc');
+				manyByDateASC.should.have.length(2, 'find many, asc');
+				manyByDateASC[0].toVO().should.deep.equal(articles[2].toVO(),
+					'find many, asc');
+				manyByDateASC[1].toVO().should.deep.equal(articles[3].toVO(),
+					'find many, asc');
+				
+				oneByDateDSC.toVO().should.deep.equal(articles[3].toVO(), 
+					'find one, dsc');
+				manyByDateDSC.should.have.length(2, 'find many, dsc');
+				manyByDateDSC[0].toVO().should.deep.equal(articles[3].toVO(),
+					'find many, dsc');
+				manyByDateDSC[1].toVO().should.deep.equal(articles[2].toVO(),
+					'find many, dsc');
+
+				done();
+			}).fail(function(error) { done(error); });
+		});
+
+		// clean up after beforeEach
+		afterEach(function(done) {
+			this.timeout(10000);
+			
+			var promises = [
+				Q.ninvoke(db, 'get', dd._id).then( function(results) {
+					return Q.ninvoke(db, 'destroy', dd._id, results[0]._rev);
+				})
+			];
+
+			articles.forEach(function(e) {
+				promises.push(Q.ninvoke(e, 'delete'));
+			});
+
+			Q.all(promises).then(
+				function() { done(); }, 
+				function(error) { done(error); }
+			);
 		});
 	});
 
