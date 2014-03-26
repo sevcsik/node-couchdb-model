@@ -166,7 +166,7 @@ describe('couchdb-model', function() {
 				views: {
 					by_date: {
 						map: function(doc) {
-							emit(doc.postDate, doc);
+							emit(doc.date, doc);
 						}
 					},
 					by_tag: {
