@@ -12,14 +12,16 @@
     "nano": "~5.7.1",
     "node-uuid": "~1.4.1",
     "underscore.string": "~2.3.3",
-    "array.prototype.find": "~0.1.1"
+    "array.prototype.find": "~0.1.1",
+    "q": "~1.0.1"
   },
   "devDependencies": {
     "chai": "~1.9.0",
     "mocha": "~1.17.1",
     "istanbul": "~0.2.4",
     "node.extend": "~1.0.10",
-    "q": "~1.0.1"
+    "q": "~1.0.1",
+    "chai-as-promised": "~4.1.1"
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha -R spec --recursive tests",
