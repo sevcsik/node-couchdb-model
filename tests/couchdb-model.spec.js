@@ -513,11 +513,10 @@ describe('couchdb-model', function() {
 				return article.delete();	
 			}).then(function() {
 				return model.findByID('5');
-			}).error(function(error) {
+			}).then(null, function(error) {
 				error.code.should.equal(404);	
 			});
 		});
-
 	});
 
 	afterEach(function(done) {
