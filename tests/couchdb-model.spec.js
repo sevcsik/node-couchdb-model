@@ -2,11 +2,10 @@
  * Unit tests for couchdb-model
  */
 
-var should = require('chai').should();
+var should = require('chai').use(require('chai-as-promised')).should();
 var couchDBModel = require('../lib/couchdb-model.js'); 
 var createNano = require('nano');
 var extend = require('node.extend');
-require('chai-as-promised');
 var Q = require('q');
 
 var COUCHDB_BASE_URL = process.env.COUCHDB_BASE_URL;
@@ -516,6 +515,26 @@ describe('couchdb-model', function() {
 			}).then(null, function(error) {
 				error.code.should.equal(404);	
 			});
+		});
+
+		// clean up after beforeEach
+		afterEach(function(done) {
+			this.timeout(10000);
+			
+			var promises = [
+				Q.ninvoke(db, 'get', dd._id).then( function(results) {
+					return Q.ninvoke(db, 'destroy', dd._id, results[0]._rev);
+				})
+			];
+
+			articles.forEach(function(e) {
+				promises.push(Q.ninvoke(e, 'delete'));
+			});
+
+			Q.all(promises).then(
+				function() { done(); }, 
+				function(error) { done(error); }
+			);
 		});
 	});
 
