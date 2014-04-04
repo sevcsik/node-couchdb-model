@@ -528,14 +528,14 @@ describe('couchdb-model', function() {
 			return article.save().then(function() {
 				return model.findOneByID('5');
 			}).then(function(data) {
-				data.should.have.key('_rev');
+				data._rev.should.be.ok;
 				data.toVO().should.deep.equal(article.toVO());		
 			}).then(function() {
 				return article.delete();	
 			}).then(function() {
 				return model.findOneByID('5');
 			}).then(null, function(error) {
-				error.code.should.equal(404);	
+				error.status_code.should.equal(404);	
 			}).then(function() {
 				done();
 			}, function(error) {
