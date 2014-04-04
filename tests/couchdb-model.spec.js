@@ -352,6 +352,218 @@ describe('couchdb-model', function() {
 		});
 	});
 
+	describe('promise', function() {
+		var db = nano.use(COUCHDB_DB_NAME);
+		var model, dd, articles;
+		// same test case as in 'view support'
+		beforeEach(function(done) {
+			this.timeout(10000);
+
+			dd = {
+				_id: '_design/article',
+				views: {
+					by_date: {
+						map: function(doc) {
+							emit(doc.date, doc);
+						}
+					},
+					by_tag: {
+						map: function(doc) {
+							if (Array.isArray(doc.tags)) {
+								doc.tags.forEach(function(e) {
+									emit(e, doc);
+								});
+							}
+						}
+					},
+					by_slug: {
+						map: function(doc) {
+							emit(doc.slug, doc);
+						}
+					}
+				}
+			};
+
+			model = couchDBModel(db, {
+				views: [
+					'_design/article/_view/by_date',
+					{
+						path: '_design/article/_view/by_tag',
+						name: 'by_one_of_the_tags'
+					},
+					{
+						path: '_design/article/_view/by_slug'
+					}
+				]
+			});
+
+			// test data
+			articles = [
+				model.create({
+					_id: '0',
+					date: "1970-01-01T00:00:00",
+					slug: "test_article_that_is_super_old",
+					tags: []
+				}),
+				model.create({
+					_id: '1',
+					date: "2013-03-24T05:22:31",
+					slug: 'test_article_one_slug',
+					tags: ['one', 'odd', 'test']
+				}),
+				model.create({
+					_id: '2',
+					date: "2014-03-24T05:00:00",
+					slug: 'test_article_two_slug',
+					tags: ['two', 'even', 'test']
+				}),
+				model.create({
+					_id: '3',
+					date: "2014-03-24T05:22:31",
+					slug: 'test_article_three_slug',
+					tags: ['three', 'odd', 'test']
+				}),
+				model.create({
+					_id: '4',
+					date: "2013-03-24T05:00:00",
+					slug: 'test_article_four_slug',
+					tags: ['four', 'even', 'test']
+				}),
+			];
+
+			// build a promise array which saves the design docs and all
+			// our articles
+			//
+			// Both nano and chouchdb-model implement the node callback 
+			// pattern so we can use Q.ninvoke on them.
+			var promises = [
+				Q.ninvoke(db, 'insert', dd, dd._id)
+			];
+
+			articles.forEach(function(e) {
+				promises.push(Q.ninvoke(e, 'save'));
+			});
+
+			// wait for every promise to be fulfilled before continuing
+			Q.all(promises).then(
+				function() { done(); }, 
+				function(error) { done(error); }
+			);
+		});
+
+		it('to findOneByID should be fulfilled on success', function(done) {
+			model.findOneByID('0').then(function(data) { 
+				data.should.be.an.instanceof(couchDBModel.Instance);
+				return data.toVO(); 
+			}).then(function() {
+				done();
+			}, function(error) { 
+				done(error); 
+			});
+		});
+
+		it('to findOneByID should be rejected on 404', function(done) {
+			model.findOneByID('nonexistent_id').then(function(result) {
+				throw new Error('success branch should not have been called');
+			}, function(error) {
+				error.status_code.should.equal(404);
+			}).then(function() {
+				done();
+			}, function(error) { 
+				done(error); 
+			});
+		});
+
+		it('to findOneBy* should be fulfilled', function(done) {
+			model.findOneBySlug('test_article_one_slug').then(function(data) { 
+				data.should.be.an.instanceof(couchDBModel.Instance);
+				return data.toVO(); 
+			}).then(function() {
+				done();
+			}, function(error) { 
+				done(error); 
+			});
+		});
+
+		it('to findManyBy* should be fulfilled', function(done) {
+			model.findManyByOneOfTheTags('even').then(function(manyByTags) {
+				manyByTags.should.have.length(2);
+				manyByTags[0].toVO().should.deep.equal(articles[2].toVO());
+				manyByTags[1].toVO().should.deep.equal(articles[4].toVO());
+			}).then(function(error) {
+				done();	
+			}, function(error) { 
+				done(error); 
+			});	
+		});
+
+		it('to save should be fulfilled', function(done) {
+			var article = model.create({
+				_id: '5',
+				date: "2013-03-24T05:00:00",
+				slug: 'test_article_five_slug',
+				tags: ['five', 'odd', 'test']
+			});
+
+			article.save().then(function() {
+				return model.findOneByID('5');
+			}).then(function(data) {
+				data._rev.should.be.ok;
+				data.toVO().should.deep.equal(article.toVO());		
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
+			});
+		});
+
+		it('to delete should be fulfilled', function(done) {
+			var article = model.create({
+				_id: '5',
+				date: "2013-03-24T05:00:00",
+				slug: 'test_article_five_slug',
+				tags: ['five', 'odd', 'test']
+			});
+
+			return article.save().then(function() {
+				return model.findOneByID('5');
+			}).then(function(data) {
+				data._rev.should.be.ok;
+				data.toVO().should.deep.equal(article.toVO());		
+			}).then(function() {
+				return article.delete();	
+			}).then(function() {
+				return model.findOneByID('5');
+			}).then(null, function(error) {
+				error.status_code.should.equal(404);	
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
+			});
+		});
+
+		// clean up after beforeEach
+		afterEach(function(done) {
+			this.timeout(10000);
+			
+			var promises = [
+				Q.ninvoke(db, 'get', dd._id).then( function(results) {
+					return Q.ninvoke(db, 'destroy', dd._id, results[0]._rev);
+				})
+			];
+
+			articles.forEach(function(e) {
+				promises.push(Q.ninvoke(e, 'delete'));
+			});
+
+			Q.all(promises).then(
+				function() { done(); }, 
+				function(error) { done(error); }
+			);
+		});
+	});
+
 	afterEach(function(done) {
 		nano.db.destroy(COUCHDB_DB_NAME, function(error) {
 			if (error) throw error;
