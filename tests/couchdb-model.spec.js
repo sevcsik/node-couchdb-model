@@ -494,8 +494,6 @@ describe('couchdb-model', function() {
 				done();	
 			}, function(error) { 
 				done(error); 
-				// for some reason chai-as-promised doesn't pint the error
-				// correctly
 			});	
 		});
 
