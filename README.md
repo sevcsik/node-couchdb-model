@@ -157,6 +157,9 @@ There's no need to `JSON.stringify` and URL encode the parameters, this is taken
 
 They work the same way as `findMany` except that limit is always set to `1`, and the second argument to `callback` will be an instance, not an array.
 
+## Promises
+All async methods return a promise (created with [Q](https://github.com/kriskowal/q)), when there's no callback passed as the last argument.
+
 ## Unit tests
 
 To run unit tests, you have to set the $COUCHDB_BASE_URL environment variable
@@ -173,4 +176,4 @@ $ COUCHDB_BASE_URL="http://admin:admin@example.com:5984/" npm test
 
 * Allow to initialize a model directly with a URL instead of a database handle
 * Allow custom validation functions
-* Promise support
+* ~~Promise support~~
