@@ -2,7 +2,7 @@
  * Unit tests for couchdb-model
  */
 
-var should = require('chai').use(require('chai-as-promised')).should();
+var should = require('chai').should();
 var couchDBModel = require('../lib/couchdb-model.js'); 
 var createNano = require('nano');
 var extend = require('node.extend');
@@ -29,11 +29,11 @@ describe('couchdb-model', function() {
 		});
 	});
 
-	it.skip('should create a model from a nano database handler', function() {
+	it('should create a model from a nano database handler', function() {
 		var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
 	});
 
-	describe.skip('simple model with ID indexing', function() {
+	describe('simple model with ID indexing', function() {
 
 		it('should create a model with ID', 
 			function(done) {
@@ -154,7 +154,7 @@ describe('couchdb-model', function() {
 		});
 	});
 
-	describe.skip('model with views', function() {
+	describe('model with views', function() {
 		var db = nano.use(COUCHDB_DB_NAME);
 		var model, dd, articles;
 		// create test design document in the database
@@ -451,35 +451,55 @@ describe('couchdb-model', function() {
 			);
 		});
 
-		it.skip('to findOneByID should be fulfilled on success', function() {
-			return model.findOneByID('0').then(function(data) { 
-				data.should.be.an.instance.of(couchDBModel.Instance);
+		it('to findOneByID should be fulfilled on success', function(done) {
+			model.findOneByID('0').then(function(data) { 
+				data.should.be.an.instanceof(couchDBModel.Instance);
 				return data.toVO(); 
-			}).should.eventually.deep.equal(articles[0].toVO());
-
+			}).then(function() {
+				done();
+			}, function(error) { 
+				done(error); 
+			});
 		});
 
-		it.skip('to findOneByID should be rejected on 404', function() {
-			return model.findOneByID('nonexistent_id').should.be.rejected;
+		it('to findOneByID should be rejected on 404', function(done) {
+			model.findOneByID('nonexistent_id').then(function(result) {
+				throw new Error('success branch should not have been called');
+			}, function(error) {
+				error.status_code.should.equal(404);
+			}).then(function() {
+				done();
+			}, function(error) { 
+				done(error); 
+			});
 		});
 
-		it.skip('to findOneBy* should be fulfilled', function() {
-			return model.findOneBySlug('test_article_one_slug').
-				then(function(data) { 
-				data.should.be.an.instance.of(couchDBModel.Instance);
+		it('to findOneBy* should be fulfilled', function(done) {
+			model.findOneBySlug('test_article_one_slug').then(function(data) { 
+				data.should.be.an.instanceof(couchDBModel.Instance);
 				return data.toVO(); 
-			}).should.eventually.deep.equal(articles[1].toVO());
+			}).then(function() {
+				done();
+			}, function(error) { 
+				done(error); 
+			});
 		});
 
-		it.skip('to findManyBy* should be fulfilled', function() {
-			return model.findManyByOneOfTheTags('even').then(function(manyByTags) {
+		it('to findManyBy* should be fulfilled', function(done) {
+			model.findManyByOneOfTheTags('even').then(function(manyByTags) {
 				manyByTags.should.have.length(2);
 				manyByTags[0].toVO().should.deep.equal(articles[2].toVO());
 				manyByTags[1].toVO().should.deep.equal(articles[4].toVO());
+			}).then(function(error) {
+				done();	
+			}, function(error) { 
+				done(error); 
+				// for some reason chai-as-promised doesn't pint the error
+				// correctly
 			});	
 		});
 
-		it('to save should be fulfilled', function() {
+		it('to save should be fulfilled', function(done) {
 			var article = model.create({
 				_id: '5',
 				date: "2013-03-24T05:00:00",
@@ -487,15 +507,19 @@ describe('couchdb-model', function() {
 				tags: ['five', 'odd', 'test']
 			});
 
-			return article.save().then(function() {
-				return model.findByID('5');
+			article.save().then(function() {
+				return model.findOneByID('5');
 			}).then(function(data) {
-				data.should.have.key('_rev');
+				data._rev.should.be.ok;
 				data.toVO().should.deep.equal(article.toVO());		
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
 			});
 		});
 
-		it('to delete should be fulfilled', function() {
+		it('to delete should be fulfilled', function(done) {
 			var article = model.create({
 				_id: '5',
 				date: "2013-03-24T05:00:00",
@@ -504,16 +528,20 @@ describe('couchdb-model', function() {
 			});
 
 			return article.save().then(function() {
-				return model.findByID('5');
+				return model.findOneByID('5');
 			}).then(function(data) {
 				data.should.have.key('_rev');
 				data.toVO().should.deep.equal(article.toVO());		
 			}).then(function() {
 				return article.delete();	
 			}).then(function() {
-				return model.findByID('5');
+				return model.findOneByID('5');
 			}).then(null, function(error) {
 				error.code.should.equal(404);	
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
 			});
 		});
 
