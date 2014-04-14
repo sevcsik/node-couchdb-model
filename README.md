@@ -1,3 +1,4 @@
+[![Gitter chat](https://badges.gitter.im/sevcsik/node-couchdb-model.png)](https://gitter.im/sevcsik/node-couchdb-model)
 # couchdb-model
 
 A simple CouchDB abstraction for NodeJS built on [nano](https://github.com/dscape/nano).
