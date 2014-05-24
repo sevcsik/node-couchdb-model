@@ -1,3 +1,5 @@
+/* global describe, beforeEach, afterEach, it, emit */
+
 /**
  * Unit tests for couchdb-model
  */
@@ -30,7 +32,7 @@ describe('couchdb-model', function() {
 	});
 
 	it('should create a model from a nano database handler', function() {
-		var Model = couchDBModel(nano.use(COUCHDB_DB_NAME));
+		couchDBModel(nano.use(COUCHDB_DB_NAME));
 	});
 
 	describe('simple model with ID indexing', function() {
