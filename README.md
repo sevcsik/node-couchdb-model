@@ -1,4 +1,7 @@
-[![Gitter chat](https://badges.gitter.im/sevcsik/node-couchdb-model.png)](https://gitter.im/sevcsik/node-couchdb-model)
+![NPM Downloads](http://img.shields.io/npm/dm/couchdb-model.svg?style=flat)
+![NPM Version](http://img.shields.io/npm/v/couchdb-model.svg?style=flat)
+
+
 # couchdb-model
 
 A simple CouchDB abstraction for NodeJS built on [nano](https://github.com/dscape/nano).
