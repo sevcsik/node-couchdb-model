@@ -1,6 +1,5 @@
-![NPM Downloads](http://img.shields.io/npm/dm/couchdb-model.svg?style=flat)
 ![NPM Version](http://img.shields.io/npm/v/couchdb-model.svg?style=flat)
-
+![NPM Downloads](http://img.shields.io/npm/dm/couchdb-model.svg?style=flat)
 
 # couchdb-model
 
