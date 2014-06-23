@@ -21,7 +21,7 @@ var COUCHDB_DB_NAME = process.env.COUCHDB_DB_NAME || 'couchdb-model-test';
 
 var nano = createNano(COUCHDB_BASE_URL);
 
-describe('couchdb-model', function() {
+describe.skip('couchdb-model', function() {
 	beforeEach(function(done) {
 		nano.db.destroy(COUCHDB_DB_NAME, function() {
 			nano.db.create(COUCHDB_DB_NAME, function(error) {

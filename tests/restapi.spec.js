@@ -47,7 +47,9 @@ describe('couchdb-model REST API', function() {
 			});
 			model.onRequest.should.be.a('function');
 
-			model = couchDBModel(nano.use(COUCHDB_DB_NAME));
+			model = couchDBModel(nano.use(COUCHDB_DB_NAME), {
+				restapi: null					
+			});
 			should.not.exist(model.onRequest);
 		});
 
@@ -77,17 +79,28 @@ describe('couchdb-model REST API', function() {
 				var res = httpMocks.createResponse();
 				model.onRequest(req, res);
 
-				res.on('end', function() {
-					res.statusCode.should.equal(200, 'status code');
-					var response = JSON.parse(res.__getData());
-					
-					response.total_rows.should.equal(2);
+				setTimeout(function() {
+					try {
+						res.statusCode.should.equal(200, 'status code');
+						var response = JSON.parse(res._getData());
+						
+						response.total_rows.should.equal(2);
+					} catch (e) {
+						done(e);
+					}
 
 					// compare with vanilla CouchDB response			
-					Q.ninvoke(model._db, 'get', '/').				
-						couchdbResponse.should.eventually.deep.equal(response).
-						notify(done);
-				});
+					Q.ninvoke(model._db, 'list').then(function(data) {
+						try {
+							data[0].should.deep.equal(response);
+						} catch (e) {
+							done(e)
+						}
+						done();
+					}, function(error) {
+						done(error)
+					});
+				}, 1000);
 			});
 		});	
 
@@ -118,17 +131,28 @@ describe('couchdb-model REST API', function() {
 				var res = httpMocks.createResponse();
 				model.onRequest(req, res);
 
-				res.on('end', function() {
-					res.statusCode.should.equal(200, 'status code');
-					var response = JSON.parse(res.__getData());
-					
-					response.total_rows.should.equal(2);
+				setTimeout(function() {
+					try {
+						res.statusCode.should.equal(200, 'status code');
+						var response = JSON.parse(res._getData());
+						
+						response.total_rows.should.equal(2);
+					} catch (e) {
+						done(e);
+					}
 
 					// compare with vanilla CouchDB response			
-					Q.ninvoke(model._db, 'get', '/').				
-						couchdbResponse.should.eventually.deep.equal(response).
-						notify(done);
-				});
+					Q.ninvoke(model._db, 'list').then(function(data) {
+						try {
+							data[0].should.deep.equal(response);
+						} catch (e) {
+							return done(e)
+						}
+						done();
+					}, function(error) {
+						done(error)
+					});
+				}, 1000);
 			});
 		});	
 
@@ -147,10 +171,15 @@ describe('couchdb-model REST API', function() {
 			var res = httpMocks.createResponse();
 			model.onRequest(req, res);
 
-			res.on('end', function() {
-				res.statusCode.should.equal(403, 'status code');
+			setTimeout(function() {
+				try {
+					res.statusCode.should.equal(403, 'status code');
+				} catch (e) {
+					return done(e);
+				}
+
 				done();
-			});
+			}, 1000);
 		});
 	});
 
@@ -163,8 +192,8 @@ describe('couchdb-model REST API', function() {
 			});	
 
 			var elements = [
-				model.create({ id: 'first', value: 'one' }),
-				model.create({ id: 'second', value: 'two' })
+				model.create({ _id: 'first', value: 'one' }),
+				model.create({ _id: 'second', value: 'two' })
 			];
 
 			var savePromises = [];
@@ -172,26 +201,47 @@ describe('couchdb-model REST API', function() {
 				savePromises.push(e.save());
 			});
 
-			Q.all(savePromises).then(function() {
+			return Q.all(savePromises).then(function() {
 				var req = httpMocks.createRequest({
 					method: 'GET',
 					url: '/second'
 				});
 					
 				var res = httpMocks.createResponse();
-				model.onRequest(req, res);
+				try {
+					model.onRequest(req, res);
+				} catch (e) {
+					done(e);
+				}
 
-				res.on('end', function() {
-					res.statusCode.should.equal(200, 'status code');
-					var response = JSON.parse(res.__getData());
-					
-					response.value.should.equal('two');
+				setTimeout(function() {
+					try {
+						res.statusCode.should.equal(200, 'status code');
+						var response = JSON.parse(res._getData());
+						
+						response.value.should.equal('two');
 
-					// compare with vanilla CouchDB response			
-					Q.ninvoke(model._db, 'get', '/second').				
-						couchdbResponse.should.eventually.deep.equal(response).
-						notify(done);
-				});
+						// compare with vanilla CouchDB response			
+						Q.ninvoke(model._db, 'get', 'second').then(
+							function(data) {
+							try {
+								data[0].should.deep.equal(response);
+							} catch (e) {
+								return done(error);
+							}
+
+							done();
+						}, function(error) {
+							done(error);
+						});
+					} catch (e) {
+						return done(e);
+					}
+				}, 1000);
+			}, function() {
+				done();
+			}, function(error) {
+				done(error);
 			});
 		});
 	});
