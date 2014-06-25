@@ -41,7 +41,7 @@ describe('couchdb-model REST API', function() {
 		});
 	});
 
-	describe.skip('GET /', function() {
+	describe('GET /', function() {
 
 		it('should create a request handler only if enabled', function() {
 			var model = couchDBModel(nano.use(COUCHDB_DB_NAME), {
@@ -55,7 +55,7 @@ describe('couchdb-model REST API', function() {
 			should.not.exist(model.onRequest);
 		});
 
-		it('should respond to GET / just like CouchDB', function(done) {
+		it('should respond to GET / by returning all documents', function(done) {
 			var model = couchDBModel(nano.use(COUCHDB_DB_NAME), {
 				restapi: {
 					index: true	
@@ -81,29 +81,24 @@ describe('couchdb-model REST API', function() {
 				var res = httpMocks.createResponse();
 				model.onRequest(req, res);
 
-				setTimeout(function() {
-					try {
-						res.statusCode.should.equal(200, 'status code');
-						var response = JSON.parse(res._getData());
-						
-						response.total_rows.should.equal(2);
-					} catch (e) {
-						done(e);
-					}
+				return Q.all([
+					model.findAll(),
+					Q.timeout(1000)
+				]).then(function(result) {
+					result = result[0];
+					res.statusCode.should.equal(200, 'status code');
+					var response = JSON.parse(res._getData());
+					response.length.should.equal(2);
 
-					// compare with vanilla CouchDB response			
-					Q.ninvoke(model._db, 'list').then(function(data) {
-						try {
-							data[0].should.deep.equal(response);
-						} catch (e) {
-							done(e)
-						}
-						done();
-					}, function(error) {
-						done(error)
+					result.forEach(function(element, index) {
+						element.toVO().should.deep.equal(response[index]);
 					});
-				}, 1000);
-			});
+				});
+			}).then(function() {
+				done()
+			}, function(error) {
+				done(error)
+			});;
 		});	
 
 		it('should respond to GET / correctly with prefix', function(done) {
@@ -127,35 +122,30 @@ describe('couchdb-model REST API', function() {
 			Q.all(savePromises).then(function() {
 				var req = httpMocks.createRequest({
 					method: 'GET',
-					url: '/testmodel/'
+					url: '/'
 				});	
 
 				var res = httpMocks.createResponse();
 				model.onRequest(req, res);
 
-				setTimeout(function() {
-					try {
-						res.statusCode.should.equal(200, 'status code');
-						var response = JSON.parse(res._getData());
-						
-						response.total_rows.should.equal(2);
-					} catch (e) {
-						done(e);
-					}
+				return Q.all([
+					model.findAll(),
+					Q.timeout(1000)
+				]).then(function(result) {
+					result = result[0];
+					res.statusCode.should.equal(200, 'status code');
+					var response = JSON.parse(res._getData());
+					response.length.should.equal(2);
 
-					// compare with vanilla CouchDB response			
-					Q.ninvoke(model._db, 'list').then(function(data) {
-						try {
-							data[0].should.deep.equal(response);
-						} catch (e) {
-							return done(e)
-						}
-						done();
-					}, function(error) {
-						done(error)
+					result.forEach(function(element, index) {
+						element.toVO().should.deep.equal(response[index]);
 					});
-				}, 1000);
-			});
+				});
+			}).then(function() {
+				done()
+			}, function(error) {
+				done(error)
+			});;
 		});	
 
 		it('should deny GET / if index is disabled', function(done) {
@@ -185,7 +175,7 @@ describe('couchdb-model REST API', function() {
 		});
 	});
 
-	describe.skip('GET /{id}', function() {
+	describe('GET /{id}', function() {
 		it('should return the correct object', function(done) {
 			var model = couchDBModel(nano.use(COUCHDB_DB_NAME), {
 				restapi: {
