@@ -83,7 +83,7 @@ describe('couchdb-model REST API', function() {
 
 				return Q.all([
 					model.findAll(),
-					Q.timeout(1000)
+					Q.delay(1000)
 				]).then(function(result) {
 					result = result[0];
 					res.statusCode.should.equal(200, 'status code');
@@ -130,7 +130,7 @@ describe('couchdb-model REST API', function() {
 
 				return Q.all([
 					model.findAll(),
-					Q.timeout(1000)
+					Q.delay(1000)
 				]).then(function(result) {
 					result = result[0];
 					res.statusCode.should.equal(200, 'status code');
@@ -200,37 +200,20 @@ describe('couchdb-model REST API', function() {
 				});
 					
 				var res = httpMocks.createResponse();
-				try {
-					model.onRequest(req, res);
-				} catch (e) {
-					done(e);
-				}
+				model.onRequest(req, res);
 
-				setTimeout(function() {
-					try {
-						res.statusCode.should.equal(200, 'status code');
-						var response = JSON.parse(res._getData());
-						
-						response.value.should.equal('two');
+				return Q.all([
+					model.findOneByID('second'),
+					Q.delay(1000)
+				]).then(function(result) {
+					var response = JSON.parse(res._getData());
 
-						// compare with vanilla CouchDB response			
-						Q.ninvoke(model._db, 'get', 'second').then(
-							function(data) {
-							try {
-								data[0].should.deep.equal(response);
-							} catch (e) {
-								return done(error);
-							}
-
-							done();
-						}, function(error) {
-							done(error);
-						});
-					} catch (e) {
-						return done(e);
-					}
-				}, 1000);
-			}, function() {
+					result = result[0];
+					res.statusCode.should.equal(200, 'status code');
+					response.value.should.equal('two');
+					result.toVO().should.deep.equal(response);
+				});
+			}).then(function() {
 				done();
 			}, function(error) {
 				done(error);
