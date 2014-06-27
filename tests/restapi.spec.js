@@ -540,7 +540,7 @@ describe('couchdb-model REST API', function() {
 		});
 	});
 
-	describe('PUT /{id}', function() {
+	describe('PUT /', function() {
 		var db = nano.use(COUCHDB_DB_NAME);
 
 		it('should not allow to save, if save is not true', function(done) {
@@ -553,12 +553,13 @@ describe('couchdb-model REST API', function() {
 			
 			var request = httpMocks.createRequest({
 				method: 'PUT',
-				url: '/some_id',
+				url: '/',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					value: 'newvalue'
+					_id: 'new_id',
+					value: 'new_value'
 				})
 			});			
 
@@ -572,7 +573,123 @@ describe('couchdb-model REST API', function() {
 				done(error);
 			});
 
-			model.onRequest(request, response);
+			model.onRequest(request, response, null, true);
+		});
+
+		it('should update an existing item', function(done) {
+			var model = couchDBModel(db, {
+				restapi: {
+					save: true
+				}
+			});
+			
+			var request; 
+			var response = httpMocks.createResponse();
+
+			var element = model.create({
+				_id: 'existing_id',
+				value: 'old_value'
+			});
+
+			element.save().then(function() {
+				request = httpMocks.createRequest({
+					method: 'PUT',
+					url: '/',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						_rev: element._rev,
+						_id: 'existing_id',
+						value: 'new_value'
+					})
+				});
+
+				model.onRequest(request, response, null, true);
+				return Q.delay(1000);	
+			}).then(function() {
+				return model.findOneByID('existing_id');	
+			}).then(function(result) {
+				response.statusCode.should.equal(200);
+				result.toVO()._id.should.equal('existing_id');
+				result.toVO().value.should.equal('new_value');
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
+			});
+		});
+	});
+	
+	describe('POST /', function() {
+		var db = nano.use(COUCHDB_DB_NAME);
+
+		it('should not allow to save, if save is not true', function(done) {
+			var model = couchDBModel(db, {
+				restapi: {
+					byID: true,
+					save: false
+				}
+			});
+			
+			var request = httpMocks.createRequest({
+				method: 'POST',
+				url: '/',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					value: 'new_value'
+				})
+			});			
+
+			var response = httpMocks.createResponse();
+
+			Q.delay(1000).then(function() {
+				response.statusCode.should.equal(403);	
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
+			});
+
+			model.onRequest(request, response, null, true);
+		});
+
+		it('should save a new item', function(done) {
+			var model = couchDBModel(db, {
+				restapi: {
+					save: true
+				}
+			});
+			
+			var response = httpMocks.createResponse();
+			var request = httpMocks.createRequest({
+				method: 'POST',
+				url: '/',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					value: 'new_value'
+				})
+			});
+
+			var responseData;
+			model.onRequest(request, response, null, true);
+
+			Q.delay(1000).then(function() {
+				responseData = JSON.parse(response._getData());
+				return model.findOneByID(responseData.id);	
+			}).then(function(result) {
+				response.statusCode.should.equal(200);
+				result.toVO()._rev.should.equal(responseData.rev);
+				result.toVO().value.should.equal('new_value');
+			}).then(function() {
+				done();
+			}, function(error) {
+				done(error);
+			});
 		});
 	});
 });
