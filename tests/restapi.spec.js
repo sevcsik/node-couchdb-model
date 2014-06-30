@@ -41,7 +41,7 @@ describe('couchdb-model REST API', function() {
 		});
 	});
 
-	describe.skip('GET /', function() {
+	describe('GET /', function() {
 
 		it('should create a request handler only if enabled', function() {
 			var model = couchDBModel(nano.use(COUCHDB_DB_NAME), {
@@ -175,7 +175,7 @@ describe('couchdb-model REST API', function() {
 		});
 	});
 
-	describe.skip('GET /{id}', function() {
+	describe('GET /{id}', function() {
 		it('should return the correct object', function(done) {
 			var model = couchDBModel(nano.use(COUCHDB_DB_NAME), {
 				restapi: {
@@ -221,7 +221,7 @@ describe('couchdb-model REST API', function() {
 		});
 	});
 
-	describe.skip('GET /{view}/{key}', function() {
+	describe('GET /{view}/{key}', function() {
 		var db = nano.use(COUCHDB_DB_NAME);
 		var model, dd, articles;
 		// create test design document in the database
@@ -398,7 +398,7 @@ describe('couchdb-model REST API', function() {
 		});	
 	});
 
-	describe.skip('GET /{view}/{params}', function() {
+	describe('GET /{view}/{params}', function() {
 		var db = nano.use(COUCHDB_DB_NAME);
 		var model, dd, articles;
 
