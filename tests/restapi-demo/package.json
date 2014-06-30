@@ -1,0 +1,8 @@
+{
+  "name": "demo",
+  "version": "0.1.0",
+  "dependencies": {
+    "nano": "^5.10.0",
+    "q": "^1.0.1"
+  }
+}
