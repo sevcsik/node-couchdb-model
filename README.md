@@ -73,6 +73,15 @@ myModel.findOneByID('my_unique_id', function(error, result) {
 });
 ```
 
+To list all documents (requires admin rights, uses `_all_docs`):
+
+``` js
+myModel.findAll(function(error, results) {
+	if (error) console.error('failed list documents');
+	else console.log(results); // result is an array of model instances
+});
+```
+
 ## Error handling
 
 If a request fails, nano's `error` parameter is just forwared to your callback.
