@@ -172,6 +172,124 @@ They work the same way as `findMany` except that limit is always set to `1`, and
 ## Promises
 All async methods return a promise (created with [Q](https://github.com/kriskowal/q)), when there's no callback passed as the last argument.
 
+## REST API
+If enabled, the model will generate an `onRequest` method, which is a standard NodeJS request handler. The REST API can be enabled via the `restapi` field in the configuration object.
+
+### Indexing
+If indexing is enabled, GET-ting the root path will return all documents in the database (if findAll has all the required permissions).
+
+``` js
+var myModel = couchDBModel(db, {
+	restapi: {
+		index: true
+	}
+});
+
+// GET / returns an array of all documents
+
+```
+
+### Querying by ID
+Elements can be queried by ID by supplying an ID in the path, if it's enabled by the `byID` flag. The ID cannot contain a slash.
+
+``` js
+var myModel = couchDBModel(db, {
+	restapi: {
+		byID: true
+	}
+});
+
+// GET /asdasd3wer will return the document with the id asdasd3wer, or 404 if not found
+```
+
+### Querying views
+Views can be enabled one-by one, by setting flags in the `views` object in the configuration. The view names should match the names in the `config.views` object, in a camelcased form. In the request URLs the original view names can be used.
+
+``` js
+var myModel = couchDBModel(db, {
+	views: [
+		'_design/article/_view/by_date', 
+		{
+			path: '_design/article/_view/by_tag',
+			name: 'by_one_of_the_tags'
+		}, 
+		{
+			path: '_design/article/_view/by_slug'
+		}
+	],
+	restapi: {
+		views: {
+			byOneOfTheTags: true,
+			bySlug: false
+		}
+	}
+});
+
+// GET /by_slug/something responds 403
+```
+
+There are two URL patterns for view requests: findOne, and with params.
+
+#### params
+View URLs can be accessed the same way as CouchDB views, with a query string. The standard CouchDB parameters can be used (`startkey`, `endkey`, etc.). This pattern is mapped to a `Model#findManyBy{view}(null, {object} params, [{function} callback)]` call.
+The result will be an array containing the result documents.
+
+Example:
+```
+GET /by_date/?startkey=2014-01-01&endkey=2014-12-31
+```
+
+#### findOne
+There's a simplified pattern which is mapped to the `Model#findOneBy{view}({string} key, [{function} callback])` call. It expects one key as a path segment, and it will respond with the first match, or 404 if there are no matches. 
+
+Example:
+``` js
+GET /by_slug/a_sample_slug
+```
+
+### PUT & POST
+Saving to the database can be enabled by setting the `save` flag.
+``` js
+var myModel = couchDBModel(db, {
+	restapi: {
+		save: true
+	}
+});
+```
+
+The request handler doesn't treat `PUT` and `POST` different. Either of them can be used to create a new document or overwrite an existing one. However, the frontend code should use `POST` for new documents and `PUT` for modifying existing ones, because the browsers treat the requests different by method.
+
+To save/create a document, send a PUT/POST request with a JSON body to the root path.
+
+### Error handling
+Common errors are mapped to the standard HTTP status codes (403, 404, 400), with a custom reason string. If something happens between the library and the database, an `500 Database Error` response is given.
+
+### URL prefix
+You can set an URL prefix to the REST API. The given URL prefix will be stripped from the path before processing the requests.
+
+``` js
+var myModel = couchDBModel(db, {
+	restapi: {
+		prefix: '/api_root',
+	}
+});
+
+// GET /api_root/ returns all documents
+```
+
+### Usage with express
+The `onRequest` function can be used as an express request handler, but the prefix has to be passed to the model.
+
+``` js
+var myModel = couchDBModel(db, {
+	restapi: {
+		prefix: '/my_api'
+	}
+});
+
+app.use('/my_api', myModel.onRequest);
+```
+
 ## Unit tests
 
 To run unit tests, you have to set the $COUCHDB_BASE_URL environment variable
